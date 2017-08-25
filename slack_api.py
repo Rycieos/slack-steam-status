@@ -11,7 +11,7 @@ with open("steam_status_settings.py") as config:
   exec(config.read(), globals(), globals())
 
 # Endpoint for Slack app slash command. Returns a message with link to auth
-@app.route('/steam_auth', methods=['POST'])
+@app.route('/api/steam_auth', methods=['POST'])
 def add_user():
   if request.form.get('token', None) != SLACK_VERIFICATION_TOKEN:
     abort(401)
@@ -32,14 +32,14 @@ def add_user():
       "to enable status sync".format(steam_id))
 
 # Endpoint for start of oauth dance
-@app.route('/slack_auth/<steam_id>', methods=['GET'])
+@app.route('/api/slack_auth/<steam_id>', methods=['GET'])
 def auth(steam_id):
   return redirect("https://slack.com/oauth/authorize?"
       "client_id={}&scope={}&state={}".format(
       SLACK_APP_ID, slack_scope, steam_id), code=302)
 
 # Endpoint for end of oauth dance. Save the user's oauth token
-@app.route('/slack_after_auth', methods=['GET'])
+@app.route('/api/slack_after_auth', methods=['GET'])
 def after_auth():
   code = request.args.get('code')
   steam_id = request.args.get('state')
