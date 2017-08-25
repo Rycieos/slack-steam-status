@@ -1,0 +1,12 @@
+# Debug for status daemon, not flask
+DEBUG = True
+
+# Steam API token
+STEAM_API_TOKEN = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+
+# Slack app client ID and secret
+SLACK_APP_ID = "000000000000.000000000000"
+SLACK_APP_SECRET = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# Slack app verification token
+SLACK_VERIFICATION_TOKEN = 'xxxxxxxxxxxxxxxxxxxxxxxx'
+
