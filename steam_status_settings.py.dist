@@ -1,6 +1,9 @@
 # Debug for status daemon, not flask
 DEBUG = True
 
+# Root url for slack API, used for link back from the slash command
+HTTP_BASE_URL="https://slack.example.com"
+
 # Steam API token
 STEAM_API_TOKEN = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 

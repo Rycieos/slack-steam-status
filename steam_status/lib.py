@@ -12,10 +12,12 @@ def get_users():
   except (IOError, ValueError):
     return {}
 
+# Save users dictonary to file DB
 def save_users(users):
   with open(users_filename, 'w') as users_file:
     json.dump(users, users_file)
 
+# Get permenant Slack OAuth token from temporary code
 def slack_get_oauth_token(app_id, app_secret, code):
   payload = 'client_id={}&client_secret={}&code={}'.format(
       app_id, app_secret, code)
@@ -29,6 +31,7 @@ def slack_get_oauth_token(app_id, app_secret, code):
   except KeyError:
     return None
 
+# Update a Slack user status
 def slack_update_status(token, status="", emoji=""):
   # Construct the string to send to Slack
   payload = 'profile={{"status_text":"{}","status_emoji":"{}"}}&token={}'.format(
@@ -38,7 +41,7 @@ def slack_update_status(token, status="", emoji=""):
   requests.post('https://slack.com/api/users.profile.set', data=payload,
       headers=slack_request_header)
 
-# Return player summaries for the comma delimited list of SteamIDs
+# Return player summaries for the list of SteamIDs
 def steam_lookup_players(token, steam_ids):
   # TODO limit to 100 users at a time
   ids_string = ','.join(steam_ids)
@@ -49,7 +52,7 @@ def steam_lookup_players(token, steam_ids):
   data = r.json()
   return data['response']['players']
 
-# Returns the SteamID for the vanity url. DOes not have to be a valid url
+# Returns the SteamID for the vanity url. Does not have to be a valid url
 def steam_resolve_vanityurl(token, vanity_url):
   r = requests.get("https://api.steampowered.com/ISteamUser/ResolveVanityURL/"
       "v0001/?key={}&vanityurl={}".format(token, vanity_url))
