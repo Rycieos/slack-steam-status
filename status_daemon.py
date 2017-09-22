@@ -6,6 +6,10 @@ import time
 def check_status(user_ids, user_statuses):
   players = steam_lookup_players(STEAM_API_TOKEN, user_ids.keys())
 
+  # Check that we got a response
+  if not players:
+    return
+
   # Get each players status, and push it to Slack if it has changed
   for player in players:
     user = player['steamid']

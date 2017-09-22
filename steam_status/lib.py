@@ -25,8 +25,9 @@ def slack_get_oauth_token(app_id, app_secret, code):
   # POST to Slack
   r = requests.post('https://slack.com/api/oauth.access', data=payload,
       headers=slack_request_header)
-  data = r.json()
+
   try:
+    data = r.json()
     return data['access_token']
   except KeyError:
     return None
@@ -49,17 +50,20 @@ def steam_lookup_players(token, steam_ids):
   # Get the user statuses from Steam
   r = requests.get("https://api.steampowered.com/ISteamUser/GetPlayerSummaries/"
       "v0002/?key={}&steamids={}".format(token, ids_string))
-  data = r.json()
-  return data['response']['players']
+  try:
+    data = r.json()
+    return data['response']['players']
+  except KeyError:
+    return None
 
 # Returns the SteamID for the vanity url. Does not have to be a valid url
 def steam_resolve_vanityurl(token, vanity_url):
   r = requests.get("https://api.steampowered.com/ISteamUser/ResolveVanityURL/"
       "v0001/?key={}&vanityurl={}".format(token, vanity_url))
-  data = r.json()
 
   # Return a value if Steam found one
   try:
+    data = r.json()
     return data['response']['steamid']
   except KeyError:
     return None
