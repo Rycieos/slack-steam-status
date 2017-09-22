@@ -38,8 +38,8 @@ def slack_update_status(token, status="", emoji=""):
       status, emoji, token)
 
   # POST to Slack
-  requests.post('https://slack.com/api/users.profile.set', data=payload,
-      headers=slack_request_header)
+  requests.post('https://slack.com/api/users.profile.set',
+      data=payload.encode('utf-8'), headers=slack_request_header)
 
 # Return player summaries for the list of SteamIDs
 def steam_lookup_players(token, steam_ids):
