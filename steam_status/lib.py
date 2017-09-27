@@ -29,7 +29,7 @@ def slack_get_oauth_token(app_id, app_secret, code):
   try:
     data = r.json()
     return data['access_token']
-  except KeyError:
+  except (KeyError, ValueError):
     return None
 
 # Update a Slack user status
@@ -53,7 +53,7 @@ def steam_lookup_players(token, steam_ids):
   try:
     data = r.json()
     return data['response']['players']
-  except KeyError:
+  except (KeyError, ValueError):
     return None
 
 # Returns the SteamID for the vanity url. Does not have to be a valid url
@@ -65,5 +65,5 @@ def steam_resolve_vanityurl(token, vanity_url):
   try:
     data = r.json()
     return data['response']['steamid']
-  except KeyError:
+  except (KeyError, ValueError):
     return None
