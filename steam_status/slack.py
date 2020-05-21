@@ -1,7 +1,11 @@
 import aiohttp
 import asyncio
+import hashlib
+import hmac
+import time
 
 slack_request_header = {'Content-Type': 'application/x-www-form-urlencoded'}
+encoding = 'utf-8'
 
 async def post(url, **kwargs):
   async with aiohttp.ClientSession() as session:
@@ -31,3 +35,14 @@ async def update_status(token, status="", emoji=""):
   # POST to Slack
   await post('https://slack.com/api/users.profile.set',
       data=payload.encode('utf-8'), headers=slack_request_header)
+
+def validate_request(body, timestamp, signature, secret):
+  if abs(time.time() - timestamp) > 60 * 5:
+    # The request timestamp is more than five minutes from local time.
+    # It could be a replay attack, so let's ignore it.
+    return False
+
+  basestr = "v0:{}:{}".format(timestamp, body.decode(encoding))
+
+  digest = hmac.new(secret.encode(encoding), basestr.encode(encoding), hashlib.sha256).hexdigest()
+  return hmac.compare_digest(signature, "v0={}".format(digest))

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import asyncio
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 import steam_status.db as db
@@ -17,10 +17,18 @@ with open("steam_status_settings.py") as config:
 
 # Endpoint for Slack app slash command. Returns a message with link to auth
 @app.post('/api/steam_auth')
-async def add_user(token: str = Form(...), text: str = Form(...)):
-  if token != SLACK_VERIFICATION_TOKEN:
+async def add_user(request: Request,
+                   x_slack_request_timestamp: int = Header(...),
+                   x_slack_signature: str = Header(...),
+                   #text: str = Form(...),
+  ):
+
+  if not slack.validate_request(await request.body(), x_slack_request_timestamp,
+          x_slack_signature, SLACK_SIGNING_SECRET):
     raise HTTPException(status_code=403, detail="No valid Slack source token")
 
+  form_data = await request.form()
+  text = form_data['text']
   if not text:
     return "Error: must pass in your steamID64 or vanity URL"
 

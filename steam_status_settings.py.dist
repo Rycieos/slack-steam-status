@@ -1,6 +1,3 @@
-# Debug for status daemon, not flask
-DEBUG = True
-
 # Root url for slack API, used for link back from the slash command
 HTTP_BASE_URL="https://slack.example.com"
 
@@ -10,6 +7,6 @@ STEAM_API_TOKEN = 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
 # Slack app client ID and secret
 SLACK_APP_ID = "000000000000.000000000000"
 SLACK_APP_SECRET = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# Slack app verification token
-SLACK_VERIFICATION_TOKEN = 'xxxxxxxxxxxxxxxxxxxxxxxx'
+# Slack app signing secret
+SLACK_SIGNING_SECRET = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
