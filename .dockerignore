@@ -1,0 +1,7 @@
+*
+!requirements.txt
+!README.md
+!slack_api.py
+!status_daemon.py
+!steam_status/*.py
+!steam_status_settings.py.dist
