@@ -18,17 +18,17 @@ def save_users(users):
     json.dump(users, users_file)
 
 # Get permenant Slack OAuth token from temporary code
-def slack_get_oauth_token(app_id, app_secret, code):
-  payload = 'client_id={}&client_secret={}&code={}'.format(
-      app_id, app_secret, code)
+def slack_get_oauth_token(app_id, app_secret, code, redirect_uri):
+  payload = 'client_id={}&client_secret={}&code={}&redirect_uri={}'.format(
+      app_id, app_secret, code, redirect_uri)
 
   # POST to Slack
-  r = requests.post('https://slack.com/api/oauth.access', data=payload,
+  r = requests.post('https://slack.com/api/oauth.v2.access', data=payload,
       headers=slack_request_header)
 
   try:
     data = r.json()
-    return data['access_token']
+    return data['authed_user']['access_token']
   except (KeyError, ValueError):
     return None
 

@@ -5,7 +5,8 @@ from flask import abort, Flask, redirect, request
 import json
 
 app = Flask(__name__)
-SLACK_SCOPE = "identify,users.profile:write"
+SLACK_SCOPE = "users.profile:write"
+REDIRECT_URI = "/api/slack_after_auth"
 
 with open("steam_status_settings.py") as config:
   exec(config.read(), globals(), globals())
@@ -34,9 +35,9 @@ def add_user():
 # Endpoint for start of oauth dance
 @app.route('/api/slack_auth/<steam_id>', methods=['GET'])
 def auth(steam_id):
-  return redirect("https://slack.com/oauth/authorize?"
-      "client_id={}&scope={}&state={}".format(
-      SLACK_APP_ID, SLACK_SCOPE, steam_id), code=302)
+  return redirect("https://slack.com/oauth/v2/authorize?"
+      "client_id={}&scope={}&state={}&redirect_uri={}".format(
+      SLACK_APP_ID, SLACK_SCOPE, steam_id, HTTP_BASE_URL + REDIRECT_URI), code=302)
 
 # Endpoint for end of oauth dance. Save the user's oauth token
 @app.route('/api/slack_after_auth', methods=['GET'])
@@ -44,7 +45,8 @@ def after_auth():
   code = request.args.get('code')
   steam_id = request.args.get('state')
 
-  token = slack_get_oauth_token(SLACK_APP_ID, SLACK_APP_SECRET, code)
+  token = slack_get_oauth_token(SLACK_APP_ID, SLACK_APP_SECRET,
+      code, HTTP_BASE_URL + REDIRECT_URI)
 
   if not token:
     return "Error: failed oauth dance!"
