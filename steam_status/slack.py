@@ -2,8 +2,10 @@ import aiohttp
 import asyncio
 import hashlib
 import hmac
+import logging
 import time
 
+logger = logging.getLogger(__name__)
 slack_request_header = {'Content-Type': 'application/x-www-form-urlencoded'}
 encoding = 'utf-8'
 
@@ -24,6 +26,7 @@ async def get_oauth_token(app_id, app_secret, code, redirect_uri):
     data = await r.json()
     return data['authed_user']['access_token']
   except (KeyError, ValueError):
+    logger.warn("Slack did not return a Oauth2 token")
     return None
 
 # Update a Slack user status

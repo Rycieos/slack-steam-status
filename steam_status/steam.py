@@ -1,5 +1,9 @@
 import aiohttp
 import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 async def get(url, **kwargs):
   async with aiohttp.ClientSession() as session:
@@ -18,6 +22,7 @@ async def lookup_players(token, steam_ids):
     data = await r.json()
     return data['response']['players']
   except (KeyError, ValueError):
+    logger.warn("Steam returned no players")
     return None
 
 # Returns the SteamID for the vanity url. Does not have to be a valid url
@@ -30,4 +35,5 @@ async def resolve_vanityurl(token, vanity_url):
     data = await r.json()
     return data['response']['steamid']
   except (KeyError, ValueError):
+    logger.debug("Steam returned no SteamID for vanity slug '%s'", vanity_url)
     return None

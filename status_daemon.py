@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 
 import asyncio
+import logging
 import time
 
 import steam_status.db as db
 import steam_status.slack as slack
 import steam_status.steam as steam
 
+logger = logging.getLogger(__name__)
+
+
 async def check_status(steam_api_token, user_ids, user_statuses):
   players = await steam.lookup_players(steam_api_token, user_ids.keys())
 
   # Check that we got a response
   if not players:
+    logger.warn("Empty response from Steam API")
     return
 
   # Get each players status, and push it to Slack if it has changed
@@ -29,14 +34,15 @@ async def check_status(steam_api_token, user_ids, user_statuses):
         continue
     except KeyError:
       # They have no remembered status
+      logger.debug("First time seeing user '%s'", user)
+
       if not status:
         # And they are not in a game, so don't overwrite their Slack status
         continue
     finally:
       user_statuses[user] = status
 
-    #if DEBUG:
-    #  print("{}: status to '{}'".format(user, status))
+    logger.debug("%s: status to '%s'", user, status)
 
     if status:
       await slack.update_status(user_ids[user], status, ":video_game:")
@@ -44,6 +50,8 @@ async def check_status(steam_api_token, user_ids, user_statuses):
       await slack.update_status(user_ids[user])
 
 async def status_daemon(steam_api_token):
+  logger.info("Starting up Slack status update daemon")
+
   user_statuses = dict()
 
   while True:
