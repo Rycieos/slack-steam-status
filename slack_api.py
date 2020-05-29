@@ -22,7 +22,7 @@ async def startup_daemon():
   asyncio.get_event_loop().create_task(status_daemon(STEAM_API_TOKEN))
 
 # Endpoint for Slack app slash command. Returns a message with link to auth
-@app.post('/api/steam_auth')
+@app.post('/api/steam_auth', response_class=slack.EphemeralTextResponse)
 async def add_user(request: Request,
                    x_slack_request_timestamp: int = Header(...),
                    x_slack_signature: str = Header(...),
@@ -48,11 +48,8 @@ async def add_user(request: Request,
     logger.debug("String '%s' not a valid Steam ID", steam_id)
     return "Error: not a valid steamID64 or vanity URL"
 
-  return {
-    "response_type": "ephemeral",
-    "text": "<{}{}|Click here> to enable Steam status "
-        "syncing".format(HTTP_BASE_URL, app.url_path_for("auth", steam_id=steam_id)),
-  }
+  return "<{}{}|Click here> to enable Steam status syncing".format(
+          HTTP_BASE_URL, app.url_path_for("auth", steam_id=steam_id))
 
 # Endpoint for start of oauth dance
 @app.get('/api/slack_auth/{steam_id}')

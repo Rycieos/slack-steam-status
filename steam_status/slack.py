@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from fastapi.responses import JSONResponse
 import hashlib
 import hmac
 import logging
@@ -12,6 +13,13 @@ encoding = 'utf-8'
 async def post(url, **kwargs):
   async with aiohttp.ClientSession() as session:
     return await session.post(url, **kwargs)
+
+class EphemeralTextResponse(JSONResponse):
+  def __init__(self, content: str, **kwargs):
+    super().__init__({
+      "response_type": "ephemeral",
+      "text": content
+    }, **kwargs)
 
 # Get permenant Slack OAuth token from temporary code
 async def get_oauth_token(app_id, app_secret, code, redirect_uri):
