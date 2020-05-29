@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
-from steam_status.lib import get_users, slack_update_status, steam_lookup_players
+import asyncio
 import time
 
-def check_status(user_ids, user_statuses):
-  players = steam_lookup_players(STEAM_API_TOKEN, user_ids.keys())
+import steam_status.db as db
+import steam_status.slack as slack
+import steam_status.steam as steam
+
+async def check_status(steam_api_token, user_ids, user_statuses):
+  players = await steam.lookup_players(steam_api_token, user_ids.keys())
 
   # Check that we got a response
   if not players:
@@ -17,37 +21,46 @@ def check_status(user_ids, user_statuses):
       status = player['gameextrainfo']
     except KeyError:
       # They are not in a game right now
-      status = ""
+      status = None
 
     # Skip if no status change
     try:
       if status == user_statuses[user]:
         continue
     except KeyError:
-      # They have no remembered status, but we will set it now
-      pass
+      # They have no remembered status
+      if not status:
+        # And they are not in a game, so don't overwrite their Slack status
+        continue
+    finally:
+      user_statuses[user] = status
 
-    user_statuses[user] = status
-
-    if DEBUG:
-      print("{}: status to '{}'".format(user, status))
+    #if DEBUG:
+    #  print("{}: status to '{}'".format(user, status))
 
     if status:
-      slack_update_status(user_ids[user], status, ":video_game:")
+      await slack.update_status(user_ids[user], status, ":video_game:")
     else:
-      slack_update_status(user_ids[user])
+      await slack.update_status(user_ids[user])
 
-if __name__ == "__main__":
-  with open("steam_status_settings.py") as config:
-    exec(config.read(), globals(), globals())
-
-  users = get_users()
-
-  # Set their status to blank. If they are in game, it will then be set, but if
-  # they are not, we won't overwrite whatever they currently have
-  user_statuses = dict.fromkeys(users.keys(),"")
+async def status_daemon(steam_api_token):
+  user_statuses = dict()
 
   while True:
-    check_status(users, user_statuses)
-    time.sleep(50)
-    users = get_users()
+    users = await db.get_users()
+    await check_status(steam_api_token, users, user_statuses)
+    await asyncio.sleep(30)
+
+def main():
+  with open("steam_status_settings.py") as config:
+    exec(config.read(), globals())
+
+  loop = asyncio.get_event_loop()
+
+  try:
+    loop.run_until_complete(status_daemon(STEAM_API_TOKEN))
+  except KeyboardInterrupt:
+    pass
+
+if __name__ == "__main__":
+  main()

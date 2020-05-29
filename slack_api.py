@@ -7,12 +7,17 @@ from fastapi.responses import RedirectResponse
 import steam_status.db as db
 import steam_status.slack as slack
 import steam_status.steam as steam
+from status_daemon import status_daemon
 
 app = FastAPI()
 SLACK_SCOPE = "users.profile:write"
 
 with open("steam_status_settings.py") as config:
-  exec(config.read(), globals(), globals())
+  exec(config.read())
+
+@app.on_event("startup")
+async def startup_daemon():
+  asyncio.get_event_loop().create_task(status_daemon(STEAM_API_TOKEN))
 
 # Endpoint for Slack app slash command. Returns a message with link to auth
 @app.post('/api/steam_auth')
