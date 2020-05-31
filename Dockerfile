@@ -7,5 +7,10 @@ RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 
 ENV MODULE_NAME=slack_api
 
+RUN mkdir -p /var/db && \
+    echo "{}" > /var/db/users.json && \
+    ln -s /var/db/users.json /app/users.json
+VOLUME /var/db
+
 COPY . /app
 WORKDIR /app

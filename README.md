@@ -72,6 +72,9 @@ changes.
  * The port that the web API server will listen on needs to be specified.
    Like any other HTTP server, it can sit behind a reverse proxy (and probably
    should, so you can enable HTTPS).
+ * The user.json database file is stored in a Docker volume (`/var/db/`) by
+   default, but if you want to store the file in a local directory instead,
+   you would need to mount it like `-v /path/to/users.json:/var/db/users.json`
 
 All together, the run command would look like this:
 ```
