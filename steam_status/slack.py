@@ -1,4 +1,5 @@
 import aiohttp
+from aiohttp.client_exceptions import ClientError
 import asyncio
 from fastapi.responses import JSONResponse
 import hashlib
@@ -26,15 +27,14 @@ async def get_oauth_token(app_id, app_secret, code, redirect_uri):
   payload = 'client_id={}&client_secret={}&code={}&redirect_uri={}'.format(
       app_id, app_secret, code, redirect_uri)
 
-  # POST to Slack
-  r = await post('https://slack.com/api/oauth.v2.access', data=payload,
-      headers=slack_request_header)
-
   try:
+    r = await post('https://slack.com/api/oauth.v2.access', data=payload,
+        headers=slack_request_header)
+
     data = await r.json()
     return data['authed_user']['access_token']
-  except (KeyError, ValueError):
-    logger.warn("Slack did not return a Oauth2 token")
+  except (KeyError, ValueError, ClientError):
+    logger.warn("Slack did not return a Oauth2 token", exc_info=True)
     return None
 
 # Update a Slack user status
@@ -43,9 +43,15 @@ async def update_status(token, status="", emoji=""):
   payload = 'profile={{"status_text":"{}","status_emoji":"{}"}}&token={}'.format(
       status, emoji, token)
 
-  # POST to Slack
-  await post('https://slack.com/api/users.profile.set',
-      data=payload.encode('utf-8'), headers=slack_request_header)
+  try:
+    r = await post('https://slack.com/api/users.profile.set',
+        data=payload.encode('utf-8'), headers=slack_request_header)
+
+    data = await r.json()
+    return data['ok']
+  except (KeyError, ValueError, ClientError):
+    logger.warn("Failed to update Slack user status", exc_info=True)
+    return False
 
 def validate_request(body, timestamp, signature, secret):
   if abs(time.time() - timestamp) > 60 * 5:

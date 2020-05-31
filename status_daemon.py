@@ -38,16 +38,19 @@ async def check_status(steam_api_token, user_ids, user_statuses):
 
       if not status:
         # And they are not in a game, so don't overwrite their Slack status
+        user_statuses[user] = None
         continue
-    finally:
-      user_statuses[user] = status
 
     logger.debug("%s: status to '%s'", user, status)
 
     if status:
-      await slack.update_status(user_ids[user], status, ":video_game:")
+      updated = await slack.update_status(user_ids[user], status, ":video_game:")
     else:
-      await slack.update_status(user_ids[user])
+      updated = await slack.update_status(user_ids[user])
+
+    if updated:
+      # Only save their current status if the status update worked on Slack
+      user_statuses[user] = status
 
 async def status_daemon(steam_api_token):
   logger.info("Starting up Slack status update daemon")
