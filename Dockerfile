@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn:python3.8
+FROM tiangolo/uvicorn-gunicorn:python3.8-slim
 MAINTAINER Mark Vander Stel <mvndrstl@gmail.com>
 
 COPY requirements.txt /tmp/
