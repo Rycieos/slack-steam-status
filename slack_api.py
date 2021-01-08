@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import aiohttp
 import asyncio
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import RedirectResponse
@@ -8,18 +9,29 @@ import logging
 import steam_status.db as db
 import steam_status.slack as slack
 import steam_status.steam as steam
-from status_daemon import status_daemon
+from status_daemon import StatusDaemon
 
 app = FastAPI()
 logger = logging.getLogger(__name__)
 SLACK_SCOPE = "users.profile:write"
+http_session: aiohttp.ClientSession
+
 
 with open("steam_status_settings.py") as config:
   exec(config.read())
 
 @app.on_event("startup")
-async def startup_daemon():
-  asyncio.get_event_loop().create_task(status_daemon(STEAM_API_TOKEN))
+async def startup():
+  global http_session
+  http_session = aiohttp.ClientSession()
+
+  status_daemon = StatusDaemon(http_session, STEAM_API_TOKEN)
+  asyncio.get_event_loop().create_task(status_daemon.run())
+
+@app.on_event("shutdown")
+async def shutdown():
+  global http_session
+  await http_session.close()
 
 # Endpoint for Slack app slash command. Returns a message with link to auth
 @app.post('/api/steam_auth', response_class=slack.EphemeralTextResponse)
@@ -38,13 +50,13 @@ async def add_user(request: Request,
     logger.debug("User called command without an argument")
     return "Error: must pass in your steamID64 or vanity URL"
 
-  steam_id = await steam.resolve_vanityurl(STEAM_API_TOKEN, text)
+  steam_id = await steam.resolve_vanityurl(http_session, STEAM_API_TOKEN, text)
 
   if not steam_id:
     logger.debug("Lookup of vanity URL for string '%s' failed", text)
     steam_id = text
 
-  if not await steam.lookup_players(STEAM_API_TOKEN, [steam_id]):
+  if not await steam.lookup_players(http_session, STEAM_API_TOKEN, [steam_id]):
     logger.debug("String '%s' not a valid Steam ID", steam_id)
     return "Error: not a valid steamID64 or vanity URL"
 
@@ -63,7 +75,7 @@ def auth(steam_id: str):
 async def after_auth(code: str, state: str):
   steam_id = state
 
-  token = await slack.get_oauth_token(SLACK_APP_ID, SLACK_APP_SECRET,
+  token = await slack.get_oauth_token(http_session, SLACK_APP_ID, SLACK_APP_SECRET,
       code, HTTP_BASE_URL + app.url_path_for("after_auth"))
 
   if not token:

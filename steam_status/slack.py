@@ -1,4 +1,3 @@
-import aiohttp
 from aiohttp.client_exceptions import ClientError
 import asyncio
 from fastapi.responses import JSONResponse
@@ -11,9 +10,6 @@ logger = logging.getLogger(__name__)
 slack_request_header = {'Content-Type': 'application/x-www-form-urlencoded'}
 encoding = 'utf-8'
 
-async def post(url, **kwargs):
-  async with aiohttp.ClientSession() as session:
-    return await session.post(url, **kwargs)
 
 class EphemeralTextResponse(JSONResponse):
   def __init__(self, content: str, **kwargs):
@@ -23,12 +19,12 @@ class EphemeralTextResponse(JSONResponse):
     }, **kwargs)
 
 # Get permenant Slack OAuth token from temporary code
-async def get_oauth_token(app_id, app_secret, code, redirect_uri):
+async def get_oauth_token(session, app_id, app_secret, code, redirect_uri):
   payload = 'client_id={}&client_secret={}&code={}&redirect_uri={}'.format(
       app_id, app_secret, code, redirect_uri)
 
   try:
-    r = await post('https://slack.com/api/oauth.v2.access', data=payload,
+    r = await session.post('https://slack.com/api/oauth.v2.access', data=payload,
         headers=slack_request_header)
 
     data = await r.json()
@@ -38,13 +34,13 @@ async def get_oauth_token(app_id, app_secret, code, redirect_uri):
     return None
 
 # Update a Slack user status
-async def update_status(token, status="", emoji=""):
+async def update_status(session, token, status="", emoji=""):
   # Construct the string to send to Slack
   payload = 'profile={{"status_text":"{}","status_emoji":"{}"}}&token={}'.format(
       status, emoji, token)
 
   try:
-    r = await post('https://slack.com/api/users.profile.set',
+    r = await session.post('https://slack.com/api/users.profile.set',
         data=payload.encode('utf-8'), headers=slack_request_header)
 
     data = await r.json()
