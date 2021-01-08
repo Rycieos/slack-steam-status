@@ -5,7 +5,9 @@ COPY requirements.txt /tmp/
 
 RUN pip install --no-cache-dir --requirement /tmp/requirements.txt
 
-ENV MODULE_NAME=slack_api
+ENV MODULE_NAME=slack_api \
+    MAX_WORKERS=1 \
+    HOST='[::]'
 
 RUN mkdir -p /var/db && \
     echo "{}" > /var/db/users.json && \
